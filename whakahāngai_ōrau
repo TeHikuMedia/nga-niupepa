@@ -1,0 +1,48 @@
+#!/usr/bin/python3
+
+import csv
+import argparse
+from taumahi import *
+from pandas import read_csv
+from tuaki_niupepa_hou import tiki_ōrau
+
+
+def whakahāngi_kōnae(perehitanga_kōnae_ingoa, perehitanga_kōnae_ingoa_hou):
+    # Updates the Māori percentage estimate for the raw text in an existing csv for text scraped from the Māori newspaper website
+    # Can't read and write simultaneously for the possibility of the new and old files being the same file.
+
+    with open(perehitanga_kōnae_ingoa, 'r') as kōnae:
+        kōnae_tūtira = list(csv.reader(kōnae))
+        kōnae.close()
+
+    with open(perehitanga_kōnae_ingoa_hou, 'w') as kōnae:
+        perehitanga_kuputohu = csv.writer(kōnae)
+        perehitanga_kuputohu.writerow(kōnae_tūtira[0])
+        for rārangi in kōnae_tūtira[1:]:
+            print(rārangi[0:4])
+            ōrau = tiki_ōrau(rārangi[5])
+            perehitanga_kuputohu.writerow(rārangi[0:4] + [ōrau, rārangi[5]])
+        kōnae.close()
+
+
+if __name__ == '__main__':
+    whakatukai = argparse.ArgumentParser()
+    whakatukai.add_argument(
+        '--input', '-i', help="Input csv file to be sorted")
+    whakatukai.add_argument(
+        '--output', '-o', help="Output text file where sorted input file is to be stored")
+    whakatukai.add_argument(
+        '--update', '-u', help="Input file to be sorted and saved under the same name")
+    kōwhiri = whakatukai.parse_args()
+
+    # If there is a file specified to be updated, both the old file and the new file will be the same
+    if kōwhiri.update:
+        perehitanga_kōnae_ingoa = perehitanga_kōnae_ingoa_hou = kōwhiri.update
+
+    else:
+        # New file is the file the user specified, or else the default file for both the input and output file
+        perehitanga_kōnae_ingoa = kōwhiri.input if kōwhiri.input else 'perehitanga_kuputohu.csv'
+        perehitanga_kōnae_ingoa_hou = kōwhiri.output if kōwhiri.output else 'test.csv'
+
+    # Updates the file
+    whakahāngi_kōnae(perehitanga_kōnae_ingoa, perehitanga_kōnae_ingoa_hou)
