@@ -20,3 +20,5 @@ Both scripts are only intended for python3.
 - Split up text entries that are evaluated as being under a certain percentage of Māori (like 95%) and evaluate them by paragraph
 - Implement 'classes' for global variables with William
 - Make a script that will split text into paragraphs from the text csv file output by hiki_niupepa_kupu
+- Run hihira_raupapa_pākehā to make sure there are no more incorrect words slipping through. Check the output file (percentage) is the same as the original perehitanga_kuputohu file
+- Comment on hihira_raupapa_pākehā and the changes made to taumahi

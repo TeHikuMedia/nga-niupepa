@@ -1,0 +1,48 @@
+#!/usr/bin/python3
+from taumahi import *
+import csv
+
+
+def hihira_kupu_pākehā(tāuru_kōnae_ingoa, pākehā_kōnae_ingoa):
+    tāuru_kōnae = open(tāuru_kōnae_ingoa, 'r')
+    pākehā_kōnae = open(pākehā_kōnae_ingoa, 'w')
+    kaituhituhi = csv.reader(tāuru_kōnae)
+    kapa = set()
+    for rāringa in kaituhituhi:
+        raupapa_māori, raupapa_rangirua, raupapa_pākehā = kōmiri_kupu(
+            rāringa[5], False)
+
+        āpitiganha = set(raupapa_pākehā.keys())
+        kapa = kapa.union(raupapa_pākehā.keys())
+
+        print("Extracting pākehā kupu from " +
+              rāringa[1] + " " + rāringa[2] + " page " + rāringa[3])
+
+    print("\n\n--------------------\n\nChecking Māori formatted words against the dictionary:\n")
+
+    raupapa_māori, raupapa_pākehā = auaha_raupapa_tū("\n".join(list(kapa)))
+    tūtira = nahanaha(raupapa_māori)
+    kupu_pai, kupu_kino = hihira_raupapa(tūtira, True)
+
+    pākehā_kōnae.write("KUPU PAI\n\n" + "\n".join(kupu_pai) +
+                       "\n\n--------------------\n\n" + "KUPU KINO\n\n" + "\n".join(kupu_kino))
+    tāuru_kōnae.close()
+    pākehā_kōnae.close()
+
+
+def matua():
+    whakatukai = argparse.ArgumentParser()
+    whakatukai.add_argument(
+        '--input', '-i', help="Input csv file to be checked")
+    whakatukai.add_argument(
+        '--output', '-o', help="Output text file of all individual English words")
+    kōwhiri = whakatukai.parse_args()
+
+    tāuru_kōnae_ingoa = kōwhiri.input if kōwhiri.input else 'perehitanga_kuputohu.csv'
+    pākehā_kōnae_ingoa = kōwhiri.output if kōwhiri.output else 'pākehā_tūtira.txt'
+
+    hihira_kupu_pākehā(tāuru_kōnae_ingoa, pākehā_kōnae_ingoa)
+
+
+if __name__ == '__main__':
+    matua()
