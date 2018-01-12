@@ -1,9 +1,10 @@
 #!/usr/bin/python3
-# Updates percentage of Māori words from an existing text file output by ______ without having to take from the internet again. Intended for when the taumahi module is updated.
+# Gets text that is ranked to be exclusively between 95% and 100% Māori and saves it to a new csv for ease of reading
 
 import csv
 import argparse
 from taumahi import *
+from pandas import read_csv
 from tuaki_niupepa_hou import tiki_ōrau
 
 
@@ -18,10 +19,9 @@ def whakahāngai_kōnae(perehitanga_kōnae_ingoa, perehitanga_kōnae_ingoa_hou):
         perehitanga_kuputohu = csv.writer(kōnae)
         perehitanga_kuputohu.writerow(kōnae_tūtira[0])
         for rārangi in kōnae_tūtira[1:]:
-            print(rārangi[0:4])
-            rārangi[5] = re.sub(r'\b[A-Za-z]\. ', '', rārangi[5])
-            ōrau = tiki_ōrau(rārangi[5])
-            perehitanga_kuputohu.writerow(rārangi[0:4] + [ōrau] + rārangi[5:])
+            if 100.00 > float(rārangi[4][:-1]) > 95.00:
+                print(rārangi[1:4])
+                perehitanga_kuputohu.writerow(rārangi)
         kōnae.close()
 
 
@@ -39,8 +39,8 @@ def matua():
         perehitanga_kōnae_ingoa = perehitanga_kōnae_ingoa_hou = kōwhiri.update
 
     else:
-        perehitanga_kōnae_ingoa = kōwhiri.input if kōwhiri.input else 'perehitanga_kuputohu.csv'
-        perehitanga_kōnae_ingoa_hou = kōwhiri.output if kōwhiri.output else 'perehitanga_kuputohu_updated.csv'
+        perehitanga_kōnae_ingoa = kōwhiri.input if kōwhiri.input else 'perehitanga_kuputohu_updated.csv'
+        perehitanga_kōnae_ingoa_hou = kōwhiri.output if kōwhiri.output else 'perehitanga_kuputohu_top_ten.csv'
 
     whakahāngai_kōnae(perehitanga_kōnae_ingoa, perehitanga_kōnae_ingoa_hou)
 

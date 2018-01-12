@@ -18,6 +18,8 @@ pae_tukutuku_haurua = '{}{}'.format(
 niupepa_kōnae_ingoa = 'niupepa_kuputohu.csv'
 perehitanga_kōnae_ingoa = 'perehitanga_kuputohu.csv'
 
+tīmata_kōwae = None
+
 
 def hihira_niupepa_kuputohu(kōwhiri):
     # Checks if the urls and raw text have been collected, and if not it collects them.
@@ -97,6 +99,7 @@ def rāringa_kaituhituhi(kapa, kaituhituhi):
     # Newspaper name, issue name and issue url. The list contains tuples of each
     # Page of the issue's page number, text and url. Only the page-specific url
     # Is used.
+    global tīmata_kōwae
 
     if kapa[3]:  # Only writes the information if text was able to be extracted
         # Cleans up excess spaces and new line characters
@@ -270,9 +273,9 @@ def tiki_ōrau(kōwae):
     # It calculates how many Māori words there are compared to the sum, and
     # Returns the percentage as a string
     if tatau_tapeke != 0:
-        return "{:0.2f}%".format((tatau_māori / tatau_tapeke) * 100)
+        return "{:0.2f}".format((tatau_māori / tatau_tapeke) * 100)
     else:
-        return "0.00%"
+        return "0.00"
 
 
 def matua():

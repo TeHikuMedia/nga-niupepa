@@ -1,18 +1,28 @@
 #!/usr/bin/python3
+# A function to output all of the English words that are being picked up from
+# Newspapers, checking which ones have Māori format and if they exist in Māori
+# Dictionary. This is best run after changes to taumahi have been made.
+
 from taumahi import *
 import csv
 
 
 def hihira_kupu_pākehā(tāuru_kōnae_ingoa, pākehā_kōnae_ingoa):
+    # Opening the input and output files
     tāuru_kōnae = open(tāuru_kōnae_ingoa, 'r')
     pākehā_kōnae = open(pākehā_kōnae_ingoa, 'w')
+    # Setting up a reader to iterate through the csv's lines
     kaituhituhi = csv.reader(tāuru_kōnae)
+    # Setting up the variable that will contain individual English words
     kapa = set()
-    for rāringa in kaituhituhi:
+    for rāringa in kaituhituhi:  # Looping through all the rows in the csv
+        # Extracting words classified as English
         raupapa_māori, raupapa_rangirua, raupapa_pākehā = kōmiri_kupu(
             rāringa[5], False)
 
+        # Making a set of the english words
         āpitiganha = set(raupapa_pākehā.keys())
+        # Joining it to the existing set
         kapa = kapa.union(raupapa_pākehā.keys())
 
         print("Extracting pākehā kupu from " +
@@ -20,17 +30,24 @@ def hihira_kupu_pākehā(tāuru_kōnae_ingoa, pākehā_kōnae_ingoa):
 
     print("\n\n--------------------\n\nChecking Māori formatted words against the dictionary:\n")
 
+    # Checking which English words have Māori fomat
     raupapa_māori, raupapa_pākehā = auaha_raupapa_tū("\n".join(list(kapa)))
+    # Putting the list of words that have Māori format in Māori alphabetical order
     tūtira = nahanaha(raupapa_māori)
+    # Separating this list out into lists of words that exist and do not exist
     kupu_pai, kupu_kino = hihira_raupapa(tūtira, True)
 
+    # Writing these lists to the output file
     pākehā_kōnae.write("KUPU PAI\n\n" + "\n".join(kupu_pai) +
                        "\n\n--------------------\n\n" + "KUPU KINO\n\n" + "\n".join(kupu_kino))
+
+    # Closing the file
     tāuru_kōnae.close()
     pākehā_kōnae.close()
 
 
 def matua():
+    # Setting up terminal options
     whakatukai = argparse.ArgumentParser()
     whakatukai.add_argument(
         '--input', '-i', help="Input csv file to be checked")
@@ -38,9 +55,11 @@ def matua():
         '--output', '-o', help="Output text file of all individual English words")
     kōwhiri = whakatukai.parse_args()
 
+    # If there are no files input by the user, the script uses default filenames
     tāuru_kōnae_ingoa = kōwhiri.input if kōwhiri.input else 'perehitanga_kuputohu.csv'
     pākehā_kōnae_ingoa = kōwhiri.output if kōwhiri.output else 'pākehā_tūtira.txt'
 
+    # Pass the input and output filenames to the function
     hihira_kupu_pākehā(tāuru_kōnae_ingoa, pākehā_kōnae_ingoa)
 
 
