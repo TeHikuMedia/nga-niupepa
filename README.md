@@ -16,5 +16,8 @@ Both scripts are only intended for python3.
 
 # hiki_niupepa_kupu To-Do List
 
-- Split up text entries that are evaluated as being under a certain percentage of Māori (like 95%) and evaluate them by paragraph (get the whole page, split into paragraphs, write each paragraph with the same information, if the paragraph continues on the next page, set it to a variable that can be accessed the next time the function is called, so that it can be written with its original page information with the remainder of its paragraph)
-- Implement classes
+- Go over script, try to improve it
+- Update README for nga-kupu
+- Write script to take eligible scripts from the main csv to write another csv (maybe if they don't contain any special characters)
+- Determine latest revision to hiki_niupepa_kupu has been successful, if not, debug
+- Comment on changes to hiki_niupepa_kupu

@@ -1,0 +1,80 @@
+#!/usr/bin/python3
+# Splits a textfile of newspapers into its composing paragraphs and saves it
+
+import csv
+import argparse
+from taumahi import *
+from tuaki_niupepa_hou import tiki_ōrau
+
+tīmata_kōwae = None
+
+
+def kopana_kōwae(perehitanga_kōnae_ingoa, perehitanga_kōnae_ingoa_hou):
+    global tīmata_kōwae
+
+    with open(perehitanga_kōnae_ingoa, 'r') as kōnae:
+        kōnae_tūtira = list(csv.reader(kōnae))
+        kōnae.close()
+
+    with open(perehitanga_kōnae_ingoa_hou, 'w') as kōnae:
+        kaituhituhi = csv.writer(kōnae)
+        kaituhituhi.writerow(kōnae_tūtira[0])
+        for rārangi in kōnae_tūtira[1:]:
+            kupu_tūtira = re.findall(
+                r'[\w\W]*?[.!?)][‘’\'\" ]*\n|[\w\W]+$', rārangi[5])
+            if len(kupu_tūtira) == 0:
+                kupu_tūtira += [rārangi[5]]
+
+            if tīmata_kōwae:  # If there is leftover text from the previous page
+                for i in range(len(kupu_tūtira)):
+                    # Find the first paragraph that isn't in caps, i.e. isn't a title
+                    if not kupu_tūtira[i].isupper():
+                        break
+                    else:
+                        pass
+                # Add the leftover text to the first paragraph that isn't entirely uppercase
+                kupu_tūtira[i] = tīmata_kōwae + kupu_tūtira[i].strip()
+
+            tīmata_kōwae = None
+            if kupu_tūtira[-1]:
+                mātāmuri_pūriki = kupu_tūtira[-1].strip().strip("‘’\'\"")[-1]
+
+            for element in ".!?":
+                if element in mātāmuri_pūriki:
+                    tīmata_kōwae = kupu_tūtira.pop()
+                    break
+
+            for kupu in kupu_tūtira:
+                kupu_tōkau = clean_whitespace(kupu)
+                # Gets the percentage of the text that is Māori
+                ōrau = tiki_ōrau(kupu)
+                # Writes the date retrieved, newspaper name, issue name, page number, Māori percentage, extracted text and page url to the file
+                kaituhituhi.writerow(
+                    rārangi[:4] + [ōrau, kupu_tōkau] + rārangi[6:])
+            print("Rewritten " + rārangi[1] + " " +
+                  rārangi[2] + " page " + rārangi[3])
+        kōnae.close()
+
+
+def matua():
+    whakatukai = argparse.ArgumentParser()
+    whakatukai.add_argument(
+        '--input', '-i', help="Input csv file to be sorted")
+    whakatukai.add_argument(
+        '--output', '-o', help="Output text file where sorted input file is to be stored")
+    whakatukai.add_argument(
+        '--update', '-u', help="Input file to be sorted and saved under the same name")
+    kōwhiri = whakatukai.parse_args()
+
+    if kōwhiri.update:
+        perehitanga_kōnae_ingoa = perehitanga_kōnae_ingoa_hou = kōwhiri.update
+
+    else:
+        perehitanga_kōnae_ingoa = kōwhiri.input if kōwhiri.input else 'perehitanga_kuputohu.csv'
+        perehitanga_kōnae_ingoa_hou = kōwhiri.output if kōwhiri.output else 'perehitanga_kuputohu_split.csv'
+
+    kopana_kōwae(perehitanga_kōnae_ingoa, perehitanga_kōnae_ingoa_hou)
+
+
+if __name__ == '__main__':
+    matua()

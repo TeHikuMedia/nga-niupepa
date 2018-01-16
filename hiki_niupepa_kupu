@@ -16,13 +16,39 @@ pae_tukutuku_haurua = '{}{}'.format(
     pae_tukutuku, '/gsdlmod?gg=text&e=p-00000-00---off-0niupepa--00-0----0-10-0---0---0direct-10---4-------0-1l--11-en-50---20-about---00-0-1-00-0-0-11-1-0utfZz-8-00-0-0-11-10-0utfZz-8-00&a=d&c=niupepa&cl=CL1')
 
 niupepa_kōnae_ingoa = 'niupepa_kuputohu.csv'
-perehitanga_kōnae_ingoa = 'perehitanga_kuputohu.csv'
+perehitanga_kōnae_ingoa = 'test.csv'
 
 tīmata_kōwae = None
 
 
+class Perehitanga:
+    def __init__(self, rārangi):
+        self.niupepa = rārangi[0]
+        self.ingoa = rārangi[1]
+        self.taukaea = rārangi[2]
+
+
+class Rārangi:
+    def __init__(self, tāuru, taukaea):
+        self.tāima = ''
+        self.niupepa = tāuru.niupepa
+        self.perehitanga = tāuru.ingoa
+        self.taukaea = taukaea
+        # Extracts the soup of the issue's first page
+        self.hupa = bs(urlopen(self.taukaea), 'html.parser')
+        # Extracts the page number from the soup
+        self.tau = self.hupa.find('b').text.split("page  ")[1]
+        self.māori = 0
+        self.rangirua = 0
+        self.pākehā = 0
+        self.tapeke = 0
+        self.ōrau = 0.00
+        # Extracts the text from the page's soup
+        self.kupu = unu_kupu_tōkau(self.hupa, self.tau)
+
+
 def hihira_niupepa_kuputohu(kōwhiri):
-    # Checks if the urls and raw text have been collected, and if not it collects them.
+    # Checks if the newspaper issue urls have been collected, and if not it collects them.
 
     if not Path(kōwhiri.urlfile if kōwhiri.urlfile else niupepa_kōnae_ingoa).exists():
         # If there is not a current url file, it begins to write one
@@ -52,21 +78,21 @@ def hihira_perehitanga_kuputohu(kōwhiri, mātāmuri_rārangi=None):
     niupepa_kōnae = open(
         kōwhiri.urlfile if kōwhiri.urlfile else niupepa_kōnae_ingoa, 'r')
     # Creates a reader variable from the csv file of urls
-    tuhinga = csv.reader(niupepa_kōnae)
+    kaipānui = csv.reader(niupepa_kōnae)
 
     # Opens the file to write, if the user hasn't given a name, uses the default filename
     perehitanga_kōnae = open(
-        kōwhiri.textfile if kōwhiri.textfile else perehitanga_kōnae_ingoa, 'a')
-    perehitanga_kaituhituhi = csv.writer(perehitanga_kōnae)
+        kōwhiri.textfile if kōwhiri.textfile else perehitanga_kōnae_ingoa, 'a' if mātāmuri_rārangi else 'w')
+    kaituhituhi = csv.writer(perehitanga_kōnae)
 
     if not mātāmuri_rārangi:  # If this evaluates as False, it means to start writing the file from scratch
         # Writes the column names since the file did not exist
-        perehitanga_kaituhituhi.writerow(
-            ['date_retrieved', 'newspaper', 'issue', 'page', 'percent_māori', 'raw_text', 'url'])
+        kaituhituhi.writerow(
+            ['date_retrieved', 'newspaper', 'issue', 'page', 'māori_words', 'ambiguous_words', 'other_words', 'total_words', 'percent_māori', 'raw_text', 'url'])
         # Skips the first row of the url file, since this is header. If it was continuing, it would continue from a row with a url.
-        next(tuhinga)
+        next(kaipānui)
     else:
-        for kapa in tuhinga:  # Loops through each row in the url csv
+        for kapa in kaipānui:  # Loops through each row in the url csv
             # When it reaches the issue it last pulled a page from
             if mātāmuri_rārangi[1:3] == kapa[0:2]:
                 # Passes the newspaper name, issue name and issue url (in a tuple) and
@@ -74,24 +100,74 @@ def hihira_perehitanga_kuputohu(kōwhiri, mātāmuri_rārangi=None):
                 # The True argument indicates that it does not need to write
                 # The text from the first page it has been passed, as it has already been written.
 
-                hātepe_perehitanga(tuple(
-                    mātāmuri_rārangi[1:3] + [mātāmuri_rārangi[6]]), perehitanga_kaituhituhi, True)
+                niupepa_rāringa = (
+                    mātāmuri_rārangi[1], mātāmuri_rārangi[2], mātāmuri_rārangi[10])
+                tāuru = Perehitanga(niupepa_rāringa)
+                hātepe_perehitanga(tāuru, kaituhituhi, True)
                 break
             else:
                 pass
 
     # Iterates through the rest of the url csv file, extracting newspaper name, issue name, and issue url
-    for tōtoru in tuhinga:  # Iterates through each row in the document, corresponding to an issue of a newspaper
+    for rāringa in kaipānui:  # Iterates through each row in the document, corresponding to an issue of a newspaper
         # Passes the newspaper name, issue name and issue url (in a tuple) and
         # The csv writer to process the text of every page of the issue
-        hātepe_perehitanga(tōtoru, perehitanga_kaituhituhi)
+        tāuru = Perehitanga(rāringa)
+        hātepe_perehitanga(tāuru, kaituhituhi)
 
     niupepa_kōnae.close()
     perehitanga_kōnae.close()
     return
 
 
-def rāringa_kaituhituhi(kapa, kaituhituhi):
+def hātepe_perehitanga(perehitanga_tāuru, kaituhituhi, unu_tuatahi=False):
+    # This function extracts the text from every page of the newspaper issue it
+    # Has been passed, and writes it to the text csv. The input is a tuple of
+    # The newspaper name, issue name and issue url, the csv writer, and a variable
+    # To determine if it should write the text from the first page of the issue
+
+    print("\n\n----------\n\nCollecting pages of " +
+          perehitanga_tāuru.ingoa + " in " + perehitanga_tāuru.niupepa + ":\n")
+
+    tāuru = Rārangi(perehitanga_tāuru, perehitanga_tāuru.taukaea)
+
+    # If it hasn't been told to ignore the first page, it passes the information to the writing function
+    if not unu_tuatahi:
+        print("Extracted page " + tāuru.tau)
+        rāringa_kaituhituhi(tāuru, kaituhituhi)
+
+    # Loops, trying to find a next page. If it can't, the loop breaks.
+    while True:
+        # Simplifies the soup to where the next page link will be located
+        taukaea_pinetohu = tāuru.hupa.select('div.navarrowsbottom')[
+            0].find('td', align='right', valign='top')
+
+        # If there is no next page button, the process ends and the list is returned
+        if taukaea_pinetohu.a == None:
+            print("\nFinished with " + perehitanga_tāuru.ingoa +
+                  " in " + perehitanga_tāuru.niupepa + "\n")
+            return
+
+        # If there is a link, its page number, soup and url are made into a tuple to be written to the csv
+        elif taukaea_pinetohu.a['href']:
+
+            tāuru = Rārangi(perehitanga_tāuru, pae_tukutuku +
+                            taukaea_pinetohu.a['href'])
+
+            print("Extracted page " + tāuru.tau)
+
+            # Passes the tuple and csv writer to the csv writing function
+            rāringa_kaituhituhi(tāuru, kaituhituhi)
+
+        # If there is some other option, the function ends, to prevent an infinite loop.
+        else:
+            print("\nError collecting all pages\n")
+            print("\nFinished with " + perehitanga_tāuru.ingoa +
+                  " in " + perehitanga_tāuru.niupepa + "\n")
+            return
+
+
+def rāringa_kaituhituhi(tāuru, kaituhituhi):
     # This function writes all of the input page's the information (from the
     # Tuple that was input) to the text csv, i.e. date retrieved, newspaper
     # Name, issue name, page number, Māori percentage, page text, and the page
@@ -99,100 +175,47 @@ def rāringa_kaituhituhi(kapa, kaituhituhi):
     # Newspaper name, issue name and issue url. The list contains tuples of each
     # Page of the issue's page number, text and url. Only the page-specific url
     # Is used.
+
     global tīmata_kōwae
 
-    if kapa[3]:  # Only writes the information if text was able to be extracted
+    if tāuru.kupu:  # Only writes the information if text was able to be extracted
         # Cleans up excess spaces and new line characters
-        kupu_tōkau = re.sub(r'[ ]{2,}', r' ', re.sub(
-            r'[\n]{2,}', '\n', kapa[3].strip()))
-        # Gets the percentage of the text that is Māori
-        ōrau = tiki_ōrau(kupu_tōkau)
-        # Writes the date retrieved, newspaper name, issue name, page number, Māori percentage, extracted text and page url to the file
-        kaituhituhi.writerow(
-            [datetime.now(), kapa[0], kapa[1], kapa[2], ōrau, kupu_tōkau, kapa[4]])
 
+        kupu_tūtira = re.findall(
+            r'[\w\W]*?[.!?][‘’\'\") ]*\n|[\w\W]+$', tāuru.kupu)
 
-def hātepe_perehitanga(tōtoru, kaituhituhi, unu_tuatahi=False):
-    # This function extracts the text from every page of the newspaper issue it
-    # Has been passed, and writes it to the text csv. The input is a tuple of
-    # The newspaper name, issue name and issue url, the csv writer, and a variable
-    # To determine if it should write the text from the first page of the issue
+        for kupu in kupu_tūtira:
 
-    print("\n\n----------\n\nCollecting pages of " +
-          tōtoru[1] + " in " + tōtoru[0] + ":\n")
-    # Extracts the soup of the issue's first page
-    hupa = bs(urlopen(tōtoru[2]), 'html.parser')
-    # Extracts the page number from the soup
-    tau = hupa.find('b').text.split("page  ")[1]
-    # Extracts the text from the page's soup
-    kupu = unu_kupu_tōkau(tōtoru, hupa, tau)
-    # Creates a tuple of information in a form that is useful to the csv writing function
-    rārangi_kapa = (tōtoru[0], tōtoru[1], tau, kupu, tōtoru[2], hupa)
+            tāuru.kupu = kupu
 
-    # If it hasn't been told to ignore the first page, it passes the information to the writing function
-    if not unu_tuatahi:
-        print("Extracted page " + tau)
-        rāringa_kaituhituhi(rārangi_kapa, kaituhituhi)
+            if tīmata_kōwae and not kupu.isupper():  # If there is leftover text from the previous page,
+                # Find the first paragraph that isn't in caps, i.e. isn't a title
+                # Add the leftover text to the first paragraph that isn't entirely uppercase
+                tāuru.kupu = tīmata_kōwae.kupu + kupu.strip()
+                whārangi_tau = tīmata_kōwae.tau
+                whārangi_taukaea = tīmata_kōwae.taukaea
+                tīmata_kōwae = None
+            else:
+                whārangi_tau = tāuru.tau
+                whārangi_taukaea = tāuru.taukaea
 
-    # Loops, trying to find a next page. If it can't, the loop breaks.
-    while True:
-        # Simplifies the soup to where the next page link will be located
-        taukaea_pinetohu = rārangi_kapa[-1].select('div.navarrowsbottom')[
-            0].find('td', align='right', valign='top')
+            # Replaces all white space with a space
+            tāuru.kupu = clean_whitespace(tāuru.kupu)
+            # Gets the percentage of the text that is Māori
+            tāuru.māori, tāuru.rangirua, tāuru.pākehā, tāuru.tapeke, tāuru.ōrau = tiki_ōrau(
+                tāuru.kupu)
+            # Prepares the row that is to be written to the csv
+            rārangi = [datetime.now(), tāuru.niupepa, tāuru.perehitanga, whārangi_tau,
+                       tāuru.māori, tāuru.rangirua, tāuru.pākehā, tāuru.tapeke, tāuru.ōrau, tāuru.kupu, whārangi_taukaea]
 
-        # If there is no next page button, the process ends and the list is returned
-        if taukaea_pinetohu.a == None:
-            print("\nFinished with from " +
-                  tōtoru[1] + " in " + tōtoru[0] + "\n")
-            return
+            mahuru_kupu = tāuru.kupu.strip().strip("‘’\'\"")
+            if mahuru_kupu:
+                if kupu == kupu_tūtira[-1] and any(element in mahuru_kupu[-1] for element in ".!?"):
+                    tīmata_kōwae = tāuru
+                    break
 
-        # If there is a link, its page number, soup and url are made into a tuple to be written to the csv
-        elif taukaea_pinetohu.a['href']:
-            # Gets the page number of the next page
-            tau = taukaea_pinetohu.text.strip()
-            # Gets the soup of the next page
-            hupa = bs(
-                urlopen(pae_tukutuku + taukaea_pinetohu.a['href']), 'html.parser')
-            print("Extracted page " + tau)
-
-            # Extracts the text of the next page
-            kupu = unu_kupu_tōkau(tōtoru, hupa, tau)
-
-            # Updates the tuple with the next page's information
-            rārangi_kapa = (tōtoru[0], tōtoru[1], tau, kupu, pae_tukutuku +
-                            taukaea_pinetohu.a['href'], hupa)
-
-            # Passes the tuple and csv writer to the csv writing function
-            rāringa_kaituhituhi(rārangi_kapa, kaituhituhi)
-
-        # If there is some other option, the function ends, to prevent an infinite loop.
-        else:
-            print("\nError collecting all pages\n")
-            print("\nFinished with " +
-                  tōtoru[1] + " in " + tōtoru[0] + "\n")
-            return
-
-
-def unu_kupu_tōkau(tōtoru, hupa, tau):
-    # Extracts the text for all pages of the issue it has been passed.
-    # It takes a tuple and a list. The tuple has the newspaper name, issue name
-    # And issue link. The list is of tuples containing each page of the issue's
-    # Number, soup and url. It outputs a list of tuples, which contain each page
-    # Of an issue's number, text and url.
-
-    # Simplify the soup to the area we are interested in
-    kupu_tōkau = hupa.select('div.documenttext')[0].find('td')
-
-    # Must determine there is a div.documenttext, because .text will raise an error if it kupu_tōkau is None
-    if kupu_tōkau != None:
-        if kupu_tōkau.text:
-            # If it can find text, it returns it
-            return kupu_tōkau.text
-        else:
-            # If there is no text found, print an error
-            print("Failed to extract text from page " + tau)
-    else:
-        print("Failed to extract text from page " + tau)
+            # Writes the date retrieved, newspaper name, issue name, page number, Māori percentage, extracted text and page url to the file
+            kaituhituhi.writerow(rārangi)
 
     return
 
@@ -222,6 +245,30 @@ def tiki_niupepa_taukaea():
             pass
     # Makes a single list, elements are made into tuples and passed to a single list, then returned
     return list(zip(niupepa_ingoa_tūtira, taukaea_niupepa_tūtira))
+
+
+def tiki_ōrau(kōwae):
+    # Uses the kōmiri_kupu function from the taumahi module to estimate how
+    # Much of the text is Māori. Input is a string of text, output is a percentage string
+
+    # Gets the word frequency dictionaries for the input text
+    raupapa_māori, raupapa_rangirua, raupapa_pākehā = kōmiri_kupu(kōwae, False)
+
+    # Calculates how many words of the Māori and English dictionary there are
+    tatau_māori = sum(raupapa_māori.values())
+    tatau_rangirua = sum(raupapa_rangirua.values())
+    tatau_pākehā = sum(raupapa_pākehā.values())
+    tatau_kapa = tatau_māori + tatau_pākehā
+    tatau_tapeke = tatau_kapa + tatau_rangirua
+
+    # Provided there are some words that are categorised as Māori or English,
+    # It calculates how many Māori words there are compared to the sum, and
+    # Returns the percentage as a string
+    if tatau_kapa != 0:
+        ōrau = round((tatau_māori / tatau_kapa) * 100, 2)
+    else:
+        ōrau = 0.00
+    return tatau_māori, tatau_rangirua, tatau_pākehā, tatau_tapeke, ōrau
 
 
 def tiki_perehitanga_taukaea(niupepa_taukaea):
@@ -257,25 +304,28 @@ def tiki_perehitanga_taukaea(niupepa_taukaea):
     return list(zip(perehitanga_ingoa_tūtira, taukaea_perehitanga_tūtira))
 
 
-def tiki_ōrau(kōwae):
-    # Uses the kōmiri_kupu function from the taumahi module to estimate how
-    # Much of the text is Māori. Input is a string of text, output is a percentage string
+def unu_kupu_tōkau(hupa, tau):
+    # Extracts the text for all pages of the issue it has been passed.
+    # It takes a tuple and a list. The tuple has the newspaper name, issue name
+    # And issue link. The list is of tuples containing each page of the issue's
+    # Number, soup and url. It outputs a list of tuples, which contain each page
+    # Of an issue's number, text and url.
 
-    # Gets the word frequency dictionaries for the input text
-    raupapa_māori, raupapa_rangirua, raupapa_pākehā = kōmiri_kupu(kōwae, False)
+    # Simplify the soup to the area we are interested in
+    kupu_tōkau = hupa.select('div.documenttext')[0].find('td')
 
-    # Calculates how many words of the Māori and English dictionary there are
-    tatau_māori = sum(raupapa_māori.values())
-    tatau_pākehā = sum(raupapa_pākehā.values())
-    tatau_tapeke = tatau_māori + tatau_pākehā
-
-    # Provided there are some words that are categorised as Māori or English,
-    # It calculates how many Māori words there are compared to the sum, and
-    # Returns the percentage as a string
-    if tatau_tapeke != 0:
-        return "{:0.2f}".format((tatau_māori / tatau_tapeke) * 100)
+    # Must determine there is a div.documenttext, because .text will raise an error if it kupu_tōkau is None
+    if kupu_tōkau != None:
+        if kupu_tōkau.text:
+            # If it can find text, it returns it
+            return kupu_tōkau.text
+        else:
+            # If there is no text found, print an error
+            print("Failed to extract text from page " + tau)
     else:
-        return "0.00"
+        print("Failed to extract text from page " + tau)
+
+    return
 
 
 def matua():
@@ -301,11 +351,22 @@ def matua():
             # Reads all the rows to a list
             rārangi_tūtira = [rārangi for rārangi in kupuhou_kōnae]
             # If the last row contains a valid url, this is the row we want to continue from. Else we continue from the second to last row.
-            rārangi_taukaea = rārangi_tūtira[-1] if 'http://' and '=CL1' in rārangi_tūtira[-1][6] else rārangi_tūtira[-2]
+            if 'http://' and '=CL1' in rārangi_tūtira[-1][10]:
+                rārangi_taukaea = rārangi_tūtira[-1]
+            elif len(rārangi_tūtira) > 2:
+                rārangi_taukaea = rārangi_tūtira[-2]
+            else:
+                rārangi_taukaea = None
 
             # Gets the newspaper name, issue and page number of the last entry recorded. If the last one is as below, the file is up to date.
-            if rārangi_taukaea[1:4] == ['Te Toa Takitini 1921-1932', 'Volume 1, No. 7', '96']:
-                print("\nThere is nothing to read, data is already up to date.\n")
+            if rārangi_taukaea:
+                if rārangi_taukaea[1:4] == ['Te Toa Takitini 1921-1932', 'Volume 1, No. 7', '96']:
+                    print("\nThere is nothing to read, data is already up to date.\n")
+                else:
+                    # Otherwise, it passes where it was last up to to the text csv writer so it may continue from there
+                    print(
+                        "\nThe current text corpus is insufficient, rewriting file...\n")
+                    hihira_perehitanga_kuputohu(kōwhiri, rārangi_taukaea)
             else:
                 # Otherwise, it passes where it was last up to to the text csv writer so it may continue from there
                 print("\nThe current text corpus is insufficient, rewriting file...\n")
