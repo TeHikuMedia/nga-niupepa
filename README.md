@@ -18,6 +18,6 @@ Both scripts are only intended for python3.
 
 - Go over script, try to improve it
 - Update README for nga-kupu
-- Determine latest revision to hiki_niupepa_kupu has been successful, if not, debug
+- Determine latest revision to hiki_niupepa_kupu has been successful (compare to other csv, check if the stop/starts at the beginning of the file work fine), if not, debug
 - Finish commenting on changes to hiki_niupepa_kupu
 - Comment on changes to kopana_kōwae, hiki_rau_ōrau
