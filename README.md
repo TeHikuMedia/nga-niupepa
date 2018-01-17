@@ -18,6 +18,6 @@ Both scripts are only intended for python3.
 
 - Go over script, try to improve it
 - Update README for nga-kupu
-- Write script to take eligible scripts from the main csv to write another csv (maybe if they don't contain any special characters)
 - Determine latest revision to hiki_niupepa_kupu has been successful, if not, debug
-- Comment on changes to hiki_niupepa_kupu
+- Finish commenting on changes to hiki_niupepa_kupu
+- Comment on changes to kopana_kōwae, hiki_rau_ōrau
