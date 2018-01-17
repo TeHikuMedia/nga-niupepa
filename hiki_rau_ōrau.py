@@ -1,0 +1,56 @@
+#!/usr/bin/python3
+# Gets text that is ranked to be 100% Māori (from a text csv file output by hiki_niupepa_kupu)
+# And saves it to a new csv with the intention of feeding it into a language model.
+# It marks it with a flag if it believes there has been problems reading the text from the newspaper's scan
+
+
+import re
+import csv
+import argparse
+from taumahi import *
+from pandas import read_csv
+from tuaki_niupepa_hou import tiki_ōrau
+
+
+def whakahāngai_kōnae(perehitanga_kōnae_ingoa, perehitanga_kōnae_ingoa_hou):
+    # Updates the Māori percentage estimate for the raw text in an existing csv for text scraped from the Māori newspaper website
+
+    with open(perehitanga_kōnae_ingoa, 'r') as kōnae:
+        kōnae_tūtira = list(csv.reader(kōnae))
+        kōnae.close()
+
+    with open(perehitanga_kōnae_ingoa_hou, 'w') as kōnae:
+        perehitanga_kuputohu = csv.writer(kōnae)
+        perehitanga_kuputohu.writerow(kōnae_tūtira[0] + ['bad_read'])
+        for rārangi in kōnae_tūtira[1:]:
+            if float(rārangi[8]) == 100.00:
+                if re.search(r'[^a-zA-Z0-9.\/\-!?()\'\",:;āēīōū£\s]', rārangi[9]):
+                    perehitanga_kuputohu.writerow(rārangi + [True])
+                else:
+                    perehitanga_kuputohu.writerow(rārangi)
+                print(rārangi[1:4])
+        kōnae.close()
+
+
+def matua():
+    whakatukai = argparse.ArgumentParser()
+    whakatukai.add_argument(
+        '--input', '-i', help="Input csv file to be sorted")
+    whakatukai.add_argument(
+        '--output', '-o', help="Output text file where sorted input file is to be stored")
+    whakatukai.add_argument(
+        '--update', '-u', help="Input file to be sorted and saved under the same name")
+    kōwhiri = whakatukai.parse_args()
+
+    if kōwhiri.update:
+        perehitanga_kōnae_ingoa = perehitanga_kōnae_ingoa_hou = kōwhiri.update
+
+    else:
+        perehitanga_kōnae_ingoa = kōwhiri.input if kōwhiri.input else 'perehitanga_kuputohu_split.csv'
+        perehitanga_kōnae_ingoa_hou = kōwhiri.output if kōwhiri.output else 'perehitanga_kuputohu_100.csv'
+
+    whakahāngai_kōnae(perehitanga_kōnae_ingoa, perehitanga_kōnae_ingoa_hou)
+
+
+if __name__ == '__main__':
+    matua()

@@ -1,12 +1,27 @@
 #!/usr/bin/python3
-# Splits a textfile of newspapers into its composing paragraphs and saves it
+# Splits a textfile of newspapers' pages (output by hiki_niupepa_kupu) into its composing paragraphs and saves it
 
 import csv
 import argparse
 from taumahi import *
-from tuaki_niupepa_hou import tiki_ōrau
+from tuaki_niupepa_hou import *
 
 tīmata_kōwae = None
+
+
+class Rārangi:
+    def __init__(self, rārangi):
+        self.tāima = rārangi[0]
+        self.niupepa = rārangi[1]
+        self.perehitanga = rārangi[2]
+        self.tau = rārangi[3]
+        self.māori = 0
+        self.rangirua = 0
+        self.pākehā = 0
+        self.tapeke = 0
+        self.ōrau = 0.00
+        self.kupu = rārangi[5]
+        self.taukaea = rārangi[6]
 
 
 def kopana_kōwae(perehitanga_kōnae_ingoa, perehitanga_kōnae_ingoa_hou):
@@ -18,41 +33,57 @@ def kopana_kōwae(perehitanga_kōnae_ingoa, perehitanga_kōnae_ingoa_hou):
 
     with open(perehitanga_kōnae_ingoa_hou, 'w') as kōnae:
         kaituhituhi = csv.writer(kōnae)
-        kaituhituhi.writerow(kōnae_tūtira[0])
-        for rārangi in kōnae_tūtira[1:]:
+        kaituhituhi.writerow(['date_retrieved', 'newspaper', 'issue', 'page', 'māori_words',
+                              'ambiguous_word', 'other_words', 'total_words', 'percent_māori', 'raw_text', 'url'])
+        del kōnae_tūtira[0]
+        for i in range(len(kōnae_tūtira)):
+            if kōnae_tūtira[i] == kōnae_tūtira[-1]:
+                mātāmuri_whārangi = True
+            elif kōnae_tūtira[i][1:3] != kōnae_tūtira[i + 1][1:3]:
+                mātāmuri_whārangi = True
+            else:
+                mātāmuri_whārangi = False
+
+            rārangi = Rārangi(kōnae_tūtira[i])
+
             kupu_tūtira = re.findall(
-                r'[\w\W]*?[.!?)][‘’\'\" ]*\n|[\w\W]+$', rārangi[5])
+                r'[\w\W]*?[.!?)][‘’\'\" ]*\n|[\w\W]+$', rārangi.kupu)
             if len(kupu_tūtira) == 0:
-                kupu_tūtira += [rārangi[5]]
-
-            if tīmata_kōwae:  # If there is leftover text from the previous page
-                for i in range(len(kupu_tūtira)):
-                    # Find the first paragraph that isn't in caps, i.e. isn't a title
-                    if not kupu_tūtira[i].isupper():
-                        break
-                    else:
-                        pass
-                # Add the leftover text to the first paragraph that isn't entirely uppercase
-                kupu_tūtira[i] = tīmata_kōwae + kupu_tūtira[i].strip()
-
-            tīmata_kōwae = None
-            if kupu_tūtira[-1]:
-                mātāmuri_pūriki = kupu_tūtira[-1].strip().strip("‘’\'\"")[-1]
-
-            for element in ".!?":
-                if element in mātāmuri_pūriki:
-                    tīmata_kōwae = kupu_tūtira.pop()
-                    break
+                kupu_tūtira += [rārangi.kupu]
 
             for kupu in kupu_tūtira:
-                kupu_tōkau = clean_whitespace(kupu)
+                rārangi.kupu = kupu
+
+                if tīmata_kōwae and not kupu.isupper():  # If there is leftover text from the previous page,
+                    # Find the first paragraph that isn't in caps, i.e. isn't a title
+                    # Add the leftover text to the first paragraph that isn't entirely uppercase
+                    rārangi.kupu = tīmata_kōwae.kupu + kupu.strip()
+                    whārangi_tau = tīmata_kōwae.tau
+                    whārangi_taukaea = tīmata_kōwae.taukaea
+                    tīmata_kōwae = None
+                else:
+                    whārangi_tau = rārangi.tau
+                    whārangi_taukaea = rārangi.taukaea
+
+                # Replaces all white space with a space
+                rārangi.kupu = clean_whitespace(rārangi.kupu)
                 # Gets the percentage of the text that is Māori
-                ōrau = tiki_ōrau(kupu)
+                rārangi.māori, rārangi.rangirua, rārangi.pākehā, rārangi.tapeke, rārangi.ōrau = tiki_ōrau(
+                    rārangi.kupu)
+
+                mahuru_kupu = rārangi.kupu.strip().strip(tohukī)
+                if mahuru_kupu:
+                    if (kupu == kupu_tūtira[-1]) and (mahuru_kupu[-1] not in tohutuhi) and not mātāmuri_whārangi:
+                        tīmata_kōwae = rārangi
+                        break
+
+                # Prepares the row that is to be written to the csv
+                kōnae_rārangi = [rārangi.tāima, rārangi.niupepa, rārangi.perehitanga, whārangi_tau,
+                                 rārangi.māori, rārangi.rangirua, rārangi.pākehā, rārangi.tapeke, rārangi.ōrau, rārangi.kupu, whārangi_taukaea]
+                print(kōnae_rārangi[1:4])
                 # Writes the date retrieved, newspaper name, issue name, page number, Māori percentage, extracted text and page url to the file
-                kaituhituhi.writerow(
-                    rārangi[:4] + [ōrau, kupu_tōkau] + rārangi[6:])
-            print("Rewritten " + rārangi[1] + " " +
-                  rārangi[2] + " page " + rārangi[3])
+                kaituhituhi.writerow(kōnae_rārangi)
+
         kōnae.close()
 
 
