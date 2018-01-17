@@ -184,9 +184,6 @@ def hihira_perehitanga_kuputohu(kōwhiri, mātāmuri_rārangi=None):
     return
 
 
-def hihira_tīmata_kōwae():
-
-
 def rāringa_kaituhituhi(tāuru, kaituhituhi):
     # This function writes all of the input page's the information (from the
     # Tuple that was input) to the text csv, i.e. date retrieved, newspaper
