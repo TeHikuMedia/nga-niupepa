@@ -11,6 +11,7 @@ tīmata_kōwae = None
 
 class Rārangi:
     def __init__(self, rārangi):
+        # Assigns the elements of each row to an appropriately named attribute of the object, with the word counts and percentages to be updated
         self.tāima = rārangi[0]
         self.niupepa = rārangi[1]
         self.perehitanga = rārangi[2]
@@ -35,8 +36,14 @@ def kopana_kōwae(perehitanga_kōnae_ingoa, perehitanga_kōnae_ingoa_hou):
         kaituhituhi = csv.writer(kōnae)
         kaituhituhi.writerow(['date_retrieved', 'newspaper', 'issue', 'page', 'māori_words',
                               'ambiguous_word', 'other_words', 'total_words', 'percent_māori', 'raw_text', 'url'])
+        # Deletes the first row as it is just the old variable names
         del kōnae_tūtira[0]
+        # Loops through the rest of the issues in the list
         for i in range(len(kōnae_tūtira)):
+            # Variable to determine whether a page is the last page of the issue
+            # By determining whether it is the last in the list, or whether the
+            # Newspaper and issue name is the same as the succeeding row.
+
             if kōnae_tūtira[i] == kōnae_tūtira[-1]:
                 mātāmuri_whārangi = True
             elif kōnae_tūtira[i][1:3] != kōnae_tūtira[i + 1][1:3]:
@@ -44,14 +51,18 @@ def kopana_kōwae(perehitanga_kōnae_ingoa, perehitanga_kōnae_ingoa_hou):
             else:
                 mātāmuri_whārangi = False
 
+            # Creates a class object of each page it loops through
             rārangi = Rārangi(kōnae_tūtira[i])
 
+            # Splits the page of each text into paragraphs
             kupu_tūtira = re.findall(
                 r'[\w\W]*?[.!?)][‘’\'\" ]*\n|[\w\W]+$', rārangi.kupu)
             if len(kupu_tūtira) == 0:
                 kupu_tūtira += [rārangi.kupu]
 
+            # Loops through each paragraph
             for kupu in kupu_tūtira:
+                # Updates the class object's text to be written
                 rārangi.kupu = kupu
 
                 if tīmata_kōwae and not kupu.isupper():  # If there is leftover text from the previous page,
@@ -62,6 +73,7 @@ def kopana_kōwae(perehitanga_kōnae_ingoa, perehitanga_kōnae_ingoa_hou):
                     whārangi_taukaea = tīmata_kōwae.taukaea
                     tīmata_kōwae = None
                 else:
+                    # Set the current page number and url to the variables that will be written to the new file
                     whārangi_tau = rārangi.tau
                     whārangi_taukaea = rārangi.taukaea
 
@@ -94,11 +106,11 @@ def matua():
     whakatukai.add_argument(
         '--output', '-o', help="Output text file where sorted input file is to be stored")
     whakatukai.add_argument(
-        '--update', '-u', help="Input file to be sorted and saved under the same name")
+        '--rewrite', '-r', help="Input file to be sorted and saved under the same name")
     kōwhiri = whakatukai.parse_args()
 
-    if kōwhiri.update:
-        perehitanga_kōnae_ingoa = perehitanga_kōnae_ingoa_hou = kōwhiri.update
+    if kōwhiri.rewrite:
+        perehitanga_kōnae_ingoa = perehitanga_kōnae_ingoa_hou = kōwhiri.rewrite
 
     else:
         perehitanga_kōnae_ingoa = kōwhiri.input if kōwhiri.input else 'perehitanga_kuputohu.csv'

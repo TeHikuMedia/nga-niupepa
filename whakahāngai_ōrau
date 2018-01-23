@@ -19,8 +19,9 @@ def whakahāngai_kōnae(perehitanga_kōnae_ingoa, perehitanga_kōnae_ingoa_hou):
         perehitanga_kuputohu.writerow(kōnae_tūtira[0])
         for rārangi in kōnae_tūtira[1:]:
             print(rārangi[0:4])
-            rārangi[5] = re.sub(r'\b[A-Za-z]\. ', '', rārangi[5])
+            # Gets the new percentage
             ōrau = tiki_ōrau(rārangi[5])
+            # Writes the row with the new percentage in the place of the previous percentage
             perehitanga_kuputohu.writerow(rārangi[0:4] + [ōrau] + rārangi[5:])
         kōnae.close()
 
@@ -32,11 +33,11 @@ def matua():
     whakatukai.add_argument(
         '--output', '-o', help="Output text file where sorted input file is to be stored")
     whakatukai.add_argument(
-        '--update', '-u', help="Input file to be sorted and saved under the same name")
+        '--rewrite', '-r', help="Input file to be sorted and saved under the same name")
     kōwhiri = whakatukai.parse_args()
 
-    if kōwhiri.update:
-        perehitanga_kōnae_ingoa = perehitanga_kōnae_ingoa_hou = kōwhiri.update
+    if kōwhiri.rewrite:
+        perehitanga_kōnae_ingoa = perehitanga_kōnae_ingoa_hou = kōwhiri.rewrite
 
     else:
         perehitanga_kōnae_ingoa = kōwhiri.input if kōwhiri.input else 'perehitanga_kuputohu.csv'

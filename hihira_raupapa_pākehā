@@ -35,6 +35,7 @@ def hihira_kupu_pākehā(tāuru_kōnae_ingoa, pākehā_kōnae_ingoa):
     # Putting the list of words that have Māori format in Māori alphabetical order
     tūtira = nahanaha(raupapa_māori)
     # Separating this list out into lists of words that exist and do not exist
+    # The True argument indicates demacronised text
     kupu_pai, kupu_kino = hihira_raupapa(tūtira, True)
 
     # Writing these lists to the output file

@@ -12,8 +12,9 @@ from pandas import read_csv
 from tuaki_niupepa_hou import tiki_ōrau
 
 
-def whakahāngai_kōnae(perehitanga_kōnae_ingoa, perehitanga_kōnae_ingoa_hou):
-    # Updates the Māori percentage estimate for the raw text in an existing csv for text scraped from the Māori newspaper website
+def hiki_rau_ōrau(perehitanga_kōnae_ingoa, perehitanga_kōnae_ingoa_hou):
+    # Writes rows from the input which meet the criteria of ōrau == 100 to the output file.
+    # Adds a flag if it detects special characters
 
     with open(perehitanga_kōnae_ingoa, 'r') as kōnae:
         kōnae_tūtira = list(csv.reader(kōnae))
@@ -39,17 +40,17 @@ def matua():
     whakatukai.add_argument(
         '--output', '-o', help="Output text file where sorted input file is to be stored")
     whakatukai.add_argument(
-        '--update', '-u', help="Input file to be sorted and saved under the same name")
+        '--rewrite', '-r', help="Input file to be sorted and saved under the same name")
     kōwhiri = whakatukai.parse_args()
 
-    if kōwhiri.update:
-        perehitanga_kōnae_ingoa = perehitanga_kōnae_ingoa_hou = kōwhiri.update
+    if kōwhiri.rewrite:
+        perehitanga_kōnae_ingoa = perehitanga_kōnae_ingoa_hou = kōwhiri.rewrite
 
     else:
         perehitanga_kōnae_ingoa = kōwhiri.input if kōwhiri.input else 'perehitanga_kuputohu_split.csv'
         perehitanga_kōnae_ingoa_hou = kōwhiri.output if kōwhiri.output else 'perehitanga_kuputohu_100.csv'
 
-    whakahāngai_kōnae(perehitanga_kōnae_ingoa, perehitanga_kōnae_ingoa_hou)
+    hiki_rau_ōrau(perehitanga_kōnae_ingoa, perehitanga_kōnae_ingoa_hou)
 
 
 if __name__ == '__main__':
