@@ -20,9 +20,10 @@ def whakahāngai_kōnae(perehitanga_kōnae_ingoa, perehitanga_kōnae_ingoa_hou):
         for rārangi in kōnae_tūtira[1:]:
             print(rārangi[0:4])
             # Gets the new percentage
-            ōrau = tiki_ōrau(rārangi[5])
+            ōrau = tiki_ōrau(rārangi[9])
             # Writes the row with the new percentage in the place of the previous percentage
-            perehitanga_kuputohu.writerow(rārangi[0:4] + [ōrau] + rārangi[5:])
+            perehitanga_kuputohu.writerow(
+                rārangi[0:4] + list(ōrau) + rārangi[9:])
         kōnae.close()
 
 
@@ -40,8 +41,8 @@ def matua():
         perehitanga_kōnae_ingoa = perehitanga_kōnae_ingoa_hou = kōwhiri.rewrite
 
     else:
-        perehitanga_kōnae_ingoa = kōwhiri.input if kōwhiri.input else 'perehitanga_kuputohu.csv'
-        perehitanga_kōnae_ingoa_hou = kōwhiri.output if kōwhiri.output else 'perehitanga_kuputohu_updated.csv'
+        perehitanga_kōnae_ingoa = kōwhiri.input if kōwhiri.input else 'perehitanga_kōnae.csv'
+        perehitanga_kōnae_ingoa_hou = kōwhiri.output if kōwhiri.output else 'perehitanga_kuputohu_split.csv'
 
     whakahāngai_kōnae(perehitanga_kōnae_ingoa, perehitanga_kōnae_ingoa_hou)
 
