@@ -5,6 +5,7 @@ import csv
 import argparse
 from taumahi import *
 from tuaki_niupepa_hou import tiki_ōrau
+from tau import *
 
 
 def whakahāngai_kōnae(perehitanga_kōnae_ingoa, perehitanga_kōnae_ingoa_hou):
@@ -18,13 +19,37 @@ def whakahāngai_kōnae(perehitanga_kōnae_ingoa, perehitanga_kōnae_ingoa_hou):
         perehitanga_kuputohu = csv.writer(kōnae)
         perehitanga_kuputohu.writerow(kōnae_tūtira[0])
         for rārangi in kōnae_tūtira[1:]:
-            print(rārangi[0:4])
+            kupu = rārangi[9]
+            kupu = rīwhi_tauriterite(
+                '((?!\d{4,})(£?([1-9]\d{0,2}[,\/‘’\'\"\.][ ]?)(\d{3}[,\/‘’\'\"\.][ ]?)*\d{3}(,,\d{1,2}){0,2})( ?\d+ ?s\.? ?)?( ?\d+ ?d\.?)?)', pakaru_moni, kupu)
+            kupu = rīwhi_tauriterite(
+                '(£(\d+[,\/‘’\'\"\.][ ])*\d+(,,\d{1,2}){0,2}( ?\d+ ?s\.? ?)?( ?\d+ ?d\.?)?)', pakaru_moni, kupu)
+            kupu = rīwhi_tauriterite('((\d{1,2}\/){1,2}\d{2})', rā_kupu, kupu)
+            kupu = rīwhi_tauriterite(
+                '((\d{1,2}\.){2}\d{1,2}( [ap]\.?m)?)', tāima_kupu, kupu)
+            kupu = rīwhi_tauriterite(
+                '((\d)+[,\/‘’\'\"\.][ ]?(\d)+)', hautau_rānei_ira, kupu)
+            kupu = rīwhi_tauriterite('((\d)+)', hōputu_tau, kupu)
+            kupu = re.sub(r'[^A-Za-zĀĒĪŌŪāēīōū\s]', '', kupu)
+
             # Gets the new percentage
-            ōrau = tiki_ōrau(rārangi[9])
+            ōrau = tiki_ōrau(kupu)
             # Writes the row with the new percentage in the place of the previous percentage
             perehitanga_kuputohu.writerow(
-                rārangi[0:4] + list(ōrau) + rārangi[9:])
+                rārangi[0:4] + list(ōrau) + [kupu] + list(reversed(rārangi[9:])))
+            print(rārangi[0:4])
         kōnae.close()
+
+
+def rīwhi_tauriterite(kimikimi, taumahi_ingoa, kōwae):
+    a = kōwae
+    ngā_whakataki = re.compile(kimikimi).findall(kōwae)
+    for whakataki in ngā_whakataki:
+        kupu = taumahi_ingoa(whakataki[0])
+        kōwae = re.compile(whakataki[0]).sub(kupu, kōwae)
+    if a != kōwae:
+        print(taumahi_ingoa)
+    return kōwae
 
 
 def matua():
@@ -42,7 +67,7 @@ def matua():
 
     else:
         perehitanga_kōnae_ingoa = kōwhiri.input if kōwhiri.input else 'perehitanga_kōnae.csv'
-        perehitanga_kōnae_ingoa_hou = kōwhiri.output if kōwhiri.output else 'perehitanga_kuputohu_split.csv'
+        perehitanga_kōnae_ingoa_hou = kōwhiri.output if kōwhiri.output else 'perehitanga_kuputohu_no_numbers.csv'
 
     whakahāngai_kōnae(perehitanga_kōnae_ingoa, perehitanga_kōnae_ingoa_hou)
 
