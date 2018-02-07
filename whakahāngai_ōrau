@@ -4,7 +4,6 @@
 import csv
 import argparse
 from taumahi import *
-from tuaki_niupepa_hou import tiki_ōrau
 from tau import *
 
 
@@ -20,17 +19,22 @@ def whakahāngai_kōnae(perehitanga_kōnae_ingoa, perehitanga_kōnae_ingoa_hou):
         perehitanga_kuputohu.writerow(kōnae_tūtira[0])
         for rārangi in kōnae_tūtira[1:]:
             kupu = rārangi[9]
-            kupu = rīwhi_tauriterite(
-                '((?!\d{4,})(£?([1-9]\d{0,2}[,\/‘’\'\"\.][ ]?)(\d{3}[,\/‘’\'\"\.][ ]?)*\d{3}(,,\d{1,2}){0,2})( ?\d+ ?s\.? ?)?( ?\d+ ?d\.?)?)', pakaru_moni, kupu)
-            kupu = rīwhi_tauriterite(
-                '(£(\d+[,\/‘’\'\"\.][ ])*\d+(,,\d{1,2}){0,2}( ?\d+ ?s\.? ?)?( ?\d+ ?d\.?)?)', pakaru_moni, kupu)
+            kupu = rīwhi_tauriterite('((?!\d{4,})(£?([1-9]\d{0,2}[,\/‘’\'\".][ ]?)(\d{3}[,\/‘’\'\".][ ]?)*\d{3}([.,]{2}\d{1,2}){1,2}))', pakaru_moni, kupu, 1)
+            kupu = rīwhi_tauriterite('(£?(\d[,\/‘’\'\".]?[ ]?)+ ?l\.? ?( ?\d+ ?[ds]\.? ?){0,2})', pakaru_moni, kupu, 2)
+            kupu = rīwhi_tauriterite('((?!\d{4,})(£?([1-9]\d{0,2}[,\/‘’\'\".][ ]?)(\d{3}[,\/‘’\'\".][ ]?)*\d{3}( ?\d+ ?[ds]\.? ?){1,2}))', pakaru_moni, kupu, 3)
+            kupu = rīwhi_tauriterite('(£?([1-9]\d*([.,]{2}\d{1,2}){1,2}))', pakaru_moni, kupu, 4)
+            kupu = rīwhi_tauriterite('((?!\d{4,})(£?[1-9]\d*( ?\d+ ?[ds]\.? ?){1,2}))', pakaru_moni, kupu, 5)
             kupu = rīwhi_tauriterite('((\d{1,2}\/){1,2}\d{2})', rā_kupu, kupu)
-            kupu = rīwhi_tauriterite(
-                '((\d{1,2}\.){2}\d{1,2}( [ap]\.?m)?)', tāima_kupu, kupu)
-            kupu = rīwhi_tauriterite(
-                '((\d)+[,\/‘’\'\"\.][ ]?(\d)+)', hautau_rānei_ira, kupu)
+            kupu = rīwhi_tauriterite('(\b\d{1,2} (Hanuere|Pepuere|Maehe|Apereira|Mei|Hune|Hurae|Akuhata|Hepetema|Oketopa|Noema|Tihema),? \d{4})', rā_kupu, kupu)
+            kupu = rīwhi_tauriterite('((Hanuere|Pepuere|Maehe|Apereira|Mei|Hune|Hurae|Akuhata|Hepetema|Oketopa|Noema|Tihema) \d{1,2},? \d{4})', rā_kupu, kupu)
+            kupu = rīwhi_tauriterite('((\d{1,2}\.){2}\d{1,2}( [ap]\.?m)?)', tāima_kupu, kupu)
+            kupu = rīwhi_tauriterite('(£([1-9]\d{0,2}[,‘’\'\".][ ]?)(\d{3}[,\/‘’\'\".][ ]?)*\d{3})', pakaru_moni, kupu, 6)
+            kupu = rīwhi_tauriterite('(([1-9]\d{0,2}[,‘’\'\".][ ]?)(\d{3}[,\/‘’\'\".][ ]?)*\d{3})', hōputu_tau, kupu)
+            kupu = rīwhi_tauriterite('((\d{1,6}( ?/ ?|\.)){1,5}\d{1,5})', hautau_rānei_ira, kupu)
+            kupu = rīwhi_tauriterite('(£(\d)+)', pakaru_moni, kupu, 7)
             kupu = rīwhi_tauriterite('((\d)+)', hōputu_tau, kupu)
             kupu = re.sub(r'[^A-Za-zĀĒĪŌŪāēīōū\s]', '', kupu)
+            kupu = clean_whitespace(kupu)
 
             # Gets the new percentage
             ōrau = tiki_ōrau(kupu)
@@ -41,14 +45,16 @@ def whakahāngai_kōnae(perehitanga_kōnae_ingoa, perehitanga_kōnae_ingoa_hou):
         kōnae.close()
 
 
-def rīwhi_tauriterite(kimikimi, taumahi_ingoa, kōwae):
+def rīwhi_tauriterite(kimikimi, taumahi_ingoa, kōwae, number=0):
     a = kōwae
-    ngā_whakataki = re.compile(kimikimi).findall(kōwae)
-    for whakataki in ngā_whakataki:
-        kupu = taumahi_ingoa(whakataki[0])
-        kōwae = re.compile(whakataki[0]).sub(kupu, kōwae)
+    ngā_whakataki_tūtira = re.compile(kimikimi).findall(kōwae)
+    for ngā_whakataki in ngā_whakataki_tūtira:
+        whakataki = ngā_whakataki[0].strip()
+        kupu = " " + taumahi_ingoa(whakataki) + " "
+        kōwae = re.compile(whakataki).sub(kupu, kōwae)
     if a != kōwae:
-        print(taumahi_ingoa)
+        pass
+        #print(taumahi_ingoa.__name__)
     return kōwae
 
 
