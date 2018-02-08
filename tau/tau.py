@@ -295,7 +295,7 @@ def rā_kupu(nama):
     ngā_marama = {1: 'Hānuere', 2: 'Pēpuere', 3: 'Māehe', 4: 'Āpereira', 5: 'Mei', 6: 'Hune',
                   7: 'Hūrae', 8: 'Ākuhata', 9: 'Hepetema', 10: 'Oketopa', 11: 'Noema', 12: 'Tīhema'}
 
-    marama = re.search(r'[A-Za-z]+', nama)
+    marama = re.search(r'[A-Z][a-z]+', nama)
     if not marama:
         # Removes extra spaces
         nama = re.sub(r'\s', '', nama)
@@ -313,14 +313,19 @@ def rā_kupu(nama):
             return nama
     else:
         marama = marama.group(0)
-        ngā_nama = clean_whitespace(nama.replace(marama, '').replace(',', '')).split()
+        # Removes useless characters/sequences from the string, including the month since that is already stored in a variable
+        tau = re.compile('([^\w ]|te|o|' + marama + ')').sub('', nama)
+
+        ngā_nama = clean_whitespace(tau).split()
         ngā_nama = [eval(tau.lstrip('0')) if tau.lstrip('0') else 0 for tau in ngā_nama]
+        au = "".join(str(mati) for mati in ngā_nama)
+
         if len(ngā_nama) == 2:
             rā, tau = ngā_nama
-        elif len("".join(ngā_nama)) == 4:
-            tau, rā = "".join(ngā_nama), None
+        elif len(au) == 4:
+            tau, rā = int(au), None
         else:
-            rā, tau = "".join(ngā_nama), None
+            rā, tau = int(au), None
 
         if rā == 0:
             return nama
