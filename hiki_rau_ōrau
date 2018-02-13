@@ -25,7 +25,7 @@ def hiki_rau_ōrau(perehitanga_kōnae_ingoa, perehitanga_kōnae_ingoa_hou):
         perehitanga_kuputohu.writerow(kōnae_tūtira[0] + ['bad_read'])
         for rārangi in kōnae_tūtira[1:]:
             if float(rārangi[8]) == 100.00:
-                if re.search(r'[^a-zA-Z0-9.\/\-!?()\'\",:;āēīōū£\s]', rārangi[9]):
+                if re.search(r'[^a-zA-Z0-9.\/\-!?()\'\",:;āēīōū£\s]', rārangi[11]):
                     perehitanga_kuputohu.writerow(rārangi + [True])
                 else:
                     perehitanga_kuputohu.writerow(rārangi)

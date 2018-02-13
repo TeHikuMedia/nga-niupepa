@@ -281,16 +281,20 @@ def tiki_perehitanga(niupepa, kaituhituhi):
             else:
                 pass
 
+        # If commentary is in the tile, we don't want to extract this title or link
         if "commentary" in niupepa.perehitanga.lower():
             continue
 
+        # If there is a carryover row from where the process stopped,
         if niupepa.mātāmuri:
+            # And the current row is not the previous written row, then skip it until it is found
             if niupepa.perehitanga != niupepa.mātāmuri_perehitanga:
                 continue
+            # If it is the same row, it processes this issue, then takes down the 'carryover row' flag
             else:
-                hātepe_perehitanga(niupepa, kaituhituhi)
                 niupepa.mātāmuri = False
 
+        # Then processes the row
         hātepe_perehitanga(niupepa, kaituhituhi)
 
 
@@ -319,22 +323,41 @@ def unu_kupu_tōkau(hupa, tau):
 
 
 def whakarauiri(kupu):
+    marama = '(Hanuere|Pepuere|Maehe|Apereira|Mei|Hune|Hurae|Akuhata|Hepetema|Oketopa|Noema|Tihema)'
+    # Comma separated pound values, ending with common representations for shillings and pounds
     kupu = rīwhi_tauriterite('((£?([1-9]\d{0,2}[,\/‘’\'\".][ ]?)(\d{3}[,\/‘’\'\".][ ]?)*\d{3}([.,]{2}\d{1,2}){1,2}))', pakaru_moni, kupu)
-    kupu  = rīwhi_tauriterite('(£?[1-9]\d{0,2}[,\/‘’\'\".]?[ ]?(\d{3}[,\/‘’\'\".]?[ ]?)+ ?l\.? ?( ?\d+ ?[ds]\.? ?){0,2})', pakaru_moni, kupu)
-    kupu  = rīwhi_tauriterite('(£?([1-9]\d*([.,]{2}\d{1,2}){1,2}))', pakaru_moni, kupu)
-    kupu  = rīwhi_tauriterite('((£?[1-9]\d*( ?\d+ ?[ds]\.? ?){1,2}))', pakaru_moni, kupu)
-    kupu  = rīwhi_tauriterite('((\d{1,2}\/){1,2}\d{2})', rā_kupu, kupu)
-    kupu  = rīwhi_tauriterite('((\b|\s|^|\W)(te )?\d{1,2}( [,o])? (Hanuere|Pepuere|Maehe|Apereira|Mei|Hune|Hurae|Akuhata|Hepetema|Oketopa|Noema|Tihema)(,? \d{4})?(\b|\s|$|\W))', rā_kupu, kupu)
-    kupu  = rīwhi_tauriterite('((Hanuere|Pepuere|Maehe|Apereira|Mei|Hune|Hurae|Akuhata|Hepetema|Oketopa|Noema|Tihema),? \d{1,2}(,? \d{4})?(\b|\s|$|\W))', rā_kupu, kupu)
-    kupu  = rīwhi_tauriterite('((\b|\s|^|\W)\d{4},? (Hanuere|Pepuere|Maehe|Apereira|Mei|Hune|Hurae|Akuhata|Hepetema|Oketopa|Noema|Tihema))', rā_kupu, kupu)
-    kupu  = rīwhi_tauriterite('((Hanuere|Pepuere|Maehe|Apereira|Mei|Hune|Hurae|Akuhata|Hepetema|Oketopa|Noema|Tihema),? \d{4}(\b|\s|$|\W))', rā_kupu, kupu)
-    kupu  = rīwhi_tauriterite('((\d{1,2}\.){2}\d{1,2}( [ap]\.?m)?)', tāima_kupu, kupu)
-    kupu  = rīwhi_tauriterite('(£([1-9]\d{0,2}[,‘’\'\".][ ]?)(\d{3}[,\/‘’\'\".][ ]?)*\d{3})', pakaru_moni, kupu)
-    kupu  = rīwhi_tauriterite('(([1-9]\d{0,2}[,‘’\'\".][ ]?)(\d{3}[,\/‘’\'\".][ ]?)*\d{3})', hōputu_tau, kupu)
-    kupu  = rīwhi_tauriterite('((\d{1,6}( ?/ ?|\.)){1,5}\d{1,5})', hautau_rānei_ira, kupu)
-    kupu  = rīwhi_tauriterite('(£(\d)+)', pakaru_moni, kupu)
-    kupu  = rīwhi_tauriterite('((\d)+)', hōputu_tau, kupu)
-    kupu  = re.sub(r'[^A-Za-zĀĒĪŌŪāēīōū\s]', '', kupu)
+    kupu = rīwhi_tauriterite('(?i)(£?[1-9]\d{0,2}[,\/‘’\'\".][ ]?(\d{3}[,\/‘’\'\".]?[ ]?)+ ?l\.? ?( ?\d+ ?[ds]\.? ?){0,2})', pakaru_moni, kupu)
+    # Non-comma separated pound values, with the same endings
+    kupu = rīwhi_tauriterite('(£?([1-9]\d*([.,]{2}\d{1,2}){1,2}))', pakaru_moni, kupu)
+    kupu = rīwhi_tauriterite('(?i)((£?[1-9]\d*( ?\d+ ?[lsd]\.? ?){1,3}))', pakaru_moni, kupu)
+    # Typical date format xx/xx/xx
+    kupu = rīwhi_tauriterite('((\d{1,2}\/){1,2}\d{2})', rā_kupu, kupu)
+    # Other common date formats that involve words - e.g. the (day) of (month), (year); or (month) (day) (year)
+    kupu = rīwhi_tauriterite('(?i)((\b|\W|\s|^)(te )\d{1,2}( [,o])? ' + marama + ',? \d{4}(\b|\W|\s|\s|$|\W))', rā_kupu, kupu)
+    kupu = rīwhi_tauriterite('(?i)((\b|\W|\s|^)\d{1,2}( [,o])? ' + marama + ',? \d{4}(\b|\W|\s|\s|$|\W))', rā_kupu, kupu)
+    kupu = rīwhi_tauriterite('(?i)(' + marama + ',? \d{1,2},? \d{4}(\b|\W|\s|$))', rā_kupu, kupu)
+    kupu = rīwhi_tauriterite('(?i)((\b|\W|\s|^)\d{4},? ' + marama + ')', rā_kupu, kupu)
+    kupu = rīwhi_tauriterite('(?i)(' + marama + ',? \d{4}(\b|\W|\s|$))', rā_kupu, kupu)
+    kupu = rīwhi_tauriterite('(?i)((\b|\W|\s|^)(te )\d{1,2}( [,o])? ' + marama + '(\b|\W|\s|$))', rā_kupu, kupu)
+    kupu = rīwhi_tauriterite('(?i)((\b|\W|\s|^)\d{1,2}( [,o])? ' + marama + '(\b|\W|\s|$))', rā_kupu, kupu)
+    kupu = rīwhi_tauriterite('(?i)(' + marama + ',? \d{1,2}(\b|\W|\s|$))', rā_kupu, kupu)
+    # Comma separated pound values with no suffixes
+    kupu = rīwhi_tauriterite('(£([1-9]\d{0,2}[,‘’\'\".][ ]?)(\d{3}[,\/‘’\'\".][ ]?)*\d{3})', pakaru_moni, kupu)
+    # Other comma separated values, not financial
+    kupu = rīwhi_tauriterite('(([1-9]\d{0,2}[,‘’\'\".][ ]?)(\d{3}[,\/‘’\'\".][ ]?)*\d{3})', hōputu_tau, kupu)
+    # Finds times separated by punctuation (with or without a space), optionally followed by am/pm
+    kupu = rīwhi_tauriterite('(?i)((\d{1,2}\. ){1,2}(\d{1,2}) ?[ap]\.?m\.?)', tāima_kupu, kupu)
+    kupu = rīwhi_tauriterite('(?i)((\d{1,2}[,.:]){0,2}(\d{1,2}) ?[ap]\.?m\.?)', tāima_kupu, kupu)
+    kupu = rīwhi_tauriterite('((\d{1,2}\. ?){1,2}\d{1,2})', tāima_kupu, kupu)
+    # Deals with any leftover slash-separated values that weren't accepted by tāima_kupu by replacing the slashes with words
+    kupu = rīwhi_tauriterite('((\d{1,6}( ?/ ?|\. ?)){1,5}\d{1,5})', hautau_rānei_ira, kupu)
+    # Finds all other monetary values
+    kupu = rīwhi_tauriterite('(£(\d)+)', pakaru_moni, kupu)
+    # Finds all other numbers
+    kupu = rīwhi_tauriterite('((\d)+)', hōputu_tau, kupu)
+    # Removes characters that aren't letters or spaces.
+    kupu = re.sub(r'[^A-Za-zĀĒĪŌŪāēīōū\s]', '', kupu)
+    # Clears excess spaces
     return clean_whitespace(kupu)
 
 

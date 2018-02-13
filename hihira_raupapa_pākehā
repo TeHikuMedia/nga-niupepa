@@ -18,7 +18,7 @@ def hihira_kupu_pākehā(tāuru_kōnae_ingoa, pākehā_kōnae_ingoa):
     for rāringa in kaituhituhi:  # Looping through all the rows in the csv
         # Extracting words classified as English
         raupapa_māori, raupapa_rangirua, raupapa_pākehā = kōmiri_kupu(
-            rāringa[5], False)
+            rāringa[11], False)
 
         # Making a set of the english words
         āpitiganha = set(raupapa_pākehā.keys())

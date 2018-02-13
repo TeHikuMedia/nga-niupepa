@@ -1,0 +1,14 @@
+{
+  "tau/tests/test_functions.py::test_comma_h\u014dputu_tau": true,
+  "tau/tests/test_functions.py::test_comma_pakaru_moni": true,
+  "tau/tests/test_functions.py::test_comma_pounds_symbols": true,
+  "tau/tests/test_functions.py::test_comma_pounds_symbols_no_shillings": true,
+  "tau/tests/test_functions.py::test_day_month_year": true,
+  "tau/tests/test_functions.py::test_hautau_r\u0101nei_ira": true,
+  "tau/tests/test_functions.py::test_month_year": true,
+  "tau/tests/test_functions.py::test_pounds": true,
+  "tau/tests/test_functions.py::test_pounds_no_shillings": true,
+  "tau/tests/test_functions.py::test_pounds_symbols": true,
+  "tau/tests/test_functions.py::test_pounds_symbols_no_shillings": true,
+  "tau/tests/test_functions.py::test_r\u0101_kupu_digit_form": true
+}

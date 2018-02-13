@@ -21,8 +21,8 @@ class Rārangi:
         self.pākehā = 0
         self.tapeke = 0
         self.ōrau = 0.00
-        self.kupu = rārangi[5]
-        self.taukaea = rārangi[6]
+        self.kupu = rārangi[11]
+        self.taukaea = rārangi[10]
 
 
 def kopana_kōwae(perehitanga_kōnae_ingoa, perehitanga_kōnae_ingoa_hou):

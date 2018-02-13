@@ -2,6 +2,8 @@ from taumahi import clean_whitespace
 import re
 import csv
 
+# This module is designed to replace forms of numbers, specifically those appear in nzdl's archive of Māori newspapers with appropriate te reo text.
+# Numbers from other sources may incur errors, or have the function break early.
 
 def hōputu_tau(tau):
     # Converts numerals into Māori words for numbers up to 100 billion.
@@ -126,19 +128,19 @@ def pakaru_moni(tui):
 
         # Replace the shorthand for pound with a common separator, or otherwise the first space, to show that it is separate from other number values
         if 'l' in tau:
-            tau = re.sub(r' ?l ?', ',,', tau)
+            tau = re.sub(r'(?i) ?l ?', ',,', tau)
 
     if ',,' not in tau:
         tau = re.sub(r' ', ',,', tau, 1)
 
-    tau = re.sub(r'p', ',,', tau)
+    tau = re.sub(r'(?i)p', ',,', tau)
 
 
 
 
-    if re.search(r' ?d ?', tau) and not re.search(r' ?s ?', tau):
+    if re.search(r'(?i) ?d ?', tau) and not re.search(r'(?i) ?s ?', tau):
         tau = re.sub(r',,', ',,,,', tau, 1)
-    whakareri = re.compile(' ?[sd] ?')
+    whakareri = re.compile('(?i) ?[sd] ?')
     if whakareri.search(tau):
         tau = whakareri.sub(',,', tau)
 
@@ -208,28 +210,39 @@ def pakaru_moni(tui):
 
 def tāima_kupu(tau):
     # Takes a string of digits and letters and returns a string of words for the time the input represents.
-    # The input string must be 3 instances of 1 or 2 digits, separated by periods, optionally followed by an 'am' or 'pm' which may have its own periods
+    # The input string must be up to 3 instances of 1 or 2 digits, separated by periods, commas or colons, optionally followed by an 'am' or 'pm' which may have its own periods
 
     # Sets up the variable that determines whether the time should be expressed as '(minutes) past (hour)' or '(minutes) to (hour)'.
     # It will be set to True if the latter format is required.
     āpānoa = False
 
-    # Split the string up into components by periods
-    ngā_tau = tau.split('.')
-    # Split the string into numeral and letter components.
-    pakaru = tau.split(' ')
-    # There will only be one element in this list if there was no "am/pm" following the numerals.
-    if len(pakaru) == 1:
-        # Set the time of day variable to be None, since there is no time of day information
-        rā = None
+    # Replace all punctuation with a single variation
+    ngā_tau = re.sub(r'[:,]', '.', tau)
+    # Search for am/pm
+    whakataki = re.search(r' ?[ap]\.?m\.?', ngā_tau)
+    # If found,
+    if whakataki:
+        whakataki = whakataki.group(0)
+        # Set the time of day variable to True if there is an 'a' in the second component, signifying the presence of 'am', else False, signifying 'pm'
+        rā = True if ('a' in whakataki) else False
+        # Remove am/pm from the string
+        ngā_tau = ngā_tau.replace(whakataki, '')
     else:
-        # Set it to True if there is an 'a' in the second component, signifying the presence of 'am', else False, signifying 'pm'
-        rā = True if ('a' in tau.split(' ')[1]) else False
+        # Set it to be None, since there is no time of day information
+        rā = None
+    # Split the string up into components by periods
+    ngā_tau = [nama.strip() for nama in ngā_tau.split('.')]
 
-    # The first component of the '.' is not relevant, the second contains the hours, and the third contains the minutes.
-    # Minutes must be split again incase of 'am'/'pm' presence
-    hāora = eval(ngā_tau[1].lstrip('0')) if ngā_tau[1].lstrip('0') else 12
-    miniti = eval(ngā_tau[2].split(' ')[0].lstrip('0')) if ngā_tau[2].split(' ')[0].lstrip('0') else 0
+    # The i is an index variable to extract the hours from the list, depending on how many entries
+    # If there are 3, the first component of the '.' is not relevant, the second contains the hours, and the third contains the minutes.
+    # Otherwise, the hours will be the first component. 3 is the maximum amount of components.
+    hāora = ngā_tau[1 if (len(ngā_tau) > 2) else 0]
+    hāora = eval(hāora.lstrip('0')) if hāora.lstrip('0') else 12
+    # If there is more than one component, the last component will represent the minutes. If there are no minutes, we assume there are no minutes past the hour
+    if len(ngā_tau) > 1:
+        miniti = eval(ngā_tau[-1].lstrip('0')) if ngā_tau[-1].lstrip('0') else 0
+    else:
+        miniti = 0
 
     # If the minutes evaluate as greater than 'half past'
     if miniti > 30:
@@ -288,42 +301,80 @@ def tāima_kupu(tau):
 
 def rā_kupu(nama):
     # Returns the words representing the date, in a string
-    # The input is a string of 2 or 3 sets of 1 or 2 digits separated by '/'.
+    # The input is a string. It can contain 2 or 3 sets of 1 or 2 digits separated by '/', or a quasi-verbal date format.
+    # This date format will definitely contain the name of the month in te reo. It will contain the day of the month, or the year, in numerals. If it has both, the day of the month will preceed the year.
+    # If it is in a day, month, year format - the words "te" and "o" may be on the left and right side of the day respectively. Both can be present, or just one. Any of the day, month and year can be separated by commas, but will definitely be separed by spaces.
     # The second set must be less than 12 or the function will break. If there is a third set, it must be less than 100 or else the output will be erroneous
 
     # Sets up the dictionary containing the names of the months
     ngā_marama = {1: 'Hānuere', 2: 'Pēpuere', 3: 'Māehe', 4: 'Āpereira', 5: 'Mei', 6: 'Hune',
                   7: 'Hūrae', 8: 'Ākuhata', 9: 'Hepetema', 10: 'Oketopa', 11: 'Noema', 12: 'Tīhema'}
 
-    marama = re.search(r'[A-Za-z]+', nama)
-    if not marama:
-        # Removes extra spaces
+    # If the function cannot find any letters, it must be in the purely numeric format, e.g. xx/xx/xx.
+    if not re.search(r'(?i)[a-z]', nama):
+        # Removes whitespace
         nama = re.sub(r'\s', '', nama)
-        # Splits the input string into either 2 or 3 components. Extracts the numbers for ease of Boolean evaluation.
-        ngā_nama = [eval(tau.lstrip('0')) if tau.lstrip('0') else 0 for tau in nama.split('/')]
+        # Splits the input string into either 2 or 3 components.
+        # The components are then evaluated as the integers they contain, unless the component solely contains 0s, then 0 is manually assigned.
+        ngā_nama = [int(tau) if tau.lstrip('0') else 0 for tau in nama.split('/')]
         # Assigns each element of the string to a variable for ease of readability
         rā, marama, tau = ngā_nama + [None] if len(ngā_nama) == 2 else ngā_nama
 
-
+        # Block of if statements that determine the order of the day, month and year.
+        # If ngā_nama's second component is greater than 12, it does not represent a month.
+        # If ngā_nama's second component is less than the 31 days represented in the 1st, 3rd, 5th etc months, or the 30 days in the 4th, 6th, 9th etc, or the maximum of 29 in the 2nd month
         if marama > 12 and ((31 >= marama and rā in [1, 3, 5, 7, 8, 10, 12]) or (30 >= marama and rā in [4, 6, 9, 11]) or (29 >= marama and rā == 2)):
+            # Then the month is actually ngā_nama's first component, and day is the second.
             rā, marama = marama, rā
+        # Otherwise, if the number in ngā_nama's second component is greater than the amount of days in the month represented by the first component
         elif (marama > 31 and rā in [1, 3, 5, 7, 8, 10, 12]) or (marama > 30 and rā in [4, 6, 9, 11]) or (marama > 29 and rā == 2):
+            # Then there is no day, the month is the list's first component, and the year is the second.
             rā, marama, tau = None, rā, marama
+        # Otherwise, if there is an unacceptable format (ngā_nama's first component being greater than the number of days in the month represented by the second component)
         elif ((rā > 31 and marama in [1, 3, 5, 7, 8, 10, 12]) or (rā > 30 and marama in [4, 6, 9, 11]) or (rā > 29 and marama == 2)) or marama > 12 or marama == 0 or rā == 0:
+            # It returns the input string with its whitespace removed.
             return nama
-    else:
-        marama = marama.group(0)
-        ngā_nama = clean_whitespace(nama.replace(marama, '').replace(',', '')).split()
-        ngā_nama = [eval(tau.lstrip('0')) if tau.lstrip('0') else 0 for tau in ngā_nama]
-        if len(ngā_nama) == 2:
-            rā, tau = ngā_nama
-        elif len("".join(ngā_nama)) == 4:
-            tau, rā = "".join(ngā_nama), None
-        else:
-            rā, tau = "".join(ngā_nama), None
 
-        if rā == 0:
+    # Otherwise, if a letter was found, it is assumed to be in the quasi-verbal format.
+    else:
+        # Finds the month. If it cannot be found, it returns the original text. Extracts the words for the month in the match.
+        marama = re.search(r'(?i)[a-z]{3,}', nama)
+        if not marama:
             return nama
+        marama = marama.group(0)
+        # Removes useless characters/sequences from the string, including the month since that is already stored in a variable, and excess spaces.
+        tau = re.compile(marama).sub('', nama)
+        tau = re.sub('(?i)([^\w ]|te|o|)','', tau)
+        # All that should remain in the string is numbers. Either the day and year (in that order) separated by a space, or just one of them alone.
+        # The string is split by its spaces, which are cleaned first so that there are no useless components.
+        ngā_nama = clean_whitespace(tau).split()
+        # The components are then evaluated as the integers they contain, unless the component solely contains 0s, then 0 is manually assigned.
+        ngā_nama = [int(tau) if tau.lstrip('0') else 0 for tau in ngā_nama]
+
+        # If there are more or less components than expected, the function returns early
+        if len(ngā_nama) > 2 or len(ngā_nama) == 0:
+            return nama
+        # If there are two components, we know they are in the order day then year, and they are assigned thusly.
+        elif len(ngā_nama) == 2:
+            rā, tau = ngā_nama
+        # Otherwise, if there is only one component, the only variable in the list is assigned to a variable so it can be processed as a string
+        else:
+            te_nama = ngā_nama[0]
+            # If this numeral has 4 digits, it could represents a year. As there is only one number, there must be no day.
+            if len(str(te_nama)) == 4:
+                tau, rā = te_nama, None
+            # If this numeral has 1 or 2 digits, it could a day. As there is only one number, there must be no year.
+            elif len(str(te_nama)):
+                rā, tau = te_nama, None
+            # If the number is not assigned, the input string is returned.
+            else:
+                return nama
+
+    # If there is an illegitimate day, month, or year, the input string is returned.
+    # The month is only evaluated if the input string did not contain words.
+    # Therefore it is possible to get some illegitimate dates, like the 31st of February of April if the input string was in the quasi-verbal format.
+    if (rā and not 0 < rā < 32) or (isinstance(marama, int) and marama > 12) or (tau and ((len(str(tau)) not in [2,4]) or (33 < int(str(tau)[-2:]) < 41) or (len(str(tau)) == 4 and str(tau)[:2] not in ['18', '19']))):
+        return nama
 
     # Sets up the output string of words
     reo = ""
@@ -338,6 +389,7 @@ def rā_kupu(nama):
     else:
         reo += "te marama o "
 
+    # If the month variable is a number, the corresponding month is found from the dictionary. Otherwise it will already be a string in te reo, and can be added to the output
     reo += ngā_marama[marama] if isinstance(marama, int) else marama
 
     # If there is no third component, return the string as is, otherwise keep adding to it by prefacing the year.
@@ -361,29 +413,6 @@ def rā_kupu(nama):
 
 
 def hautau_rānei_ira(tau):
+    # Picks up numbers in strings separated by slashes or periods, and returns the numbers joined by the word "mā".
     kati = re.search(r'( ?/ ?|\.)', tau).group(0)
     return " mā ".join(tau.split(kati))
-
-
-def search(file):
-    frequency_dictionary = {}
-    file.seek(0)
-    reader = csv.reader(file)
-    for row in reader:
-        matches = re.findall(r'(£?[1-9]\d{0,2}[,\/‘’\'\".]?[ ]?(\d{3}[,\/‘’\'\".]?[ ]?)+ ?l\.? ?( \d+ ?[ds]\.? ?){0,2})', row[9])
-        for match in matches:
-                match = match[0]
-                if match not in frequency_dictionary:
-                    frequency_dictionary[match] = 0
-                frequency_dictionary[match] += 1
-    list1 = list(frequency_dictionary.keys())
-    list1.sort()
-    return list1
-
-
-def seek(file, kupu):
-    file.seek(0)
-    reader = csv.reader(file)
-    for row in reader:
-        if kupu in row[9]:
-            print(row[10])

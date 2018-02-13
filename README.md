@@ -2,6 +2,9 @@
 Code for extracting Māori text from the 19th century Māori language newspapers
 Both scripts are only intended for python3.
 
+## Tau
+`tau` is a module containing functions that return the reo of common strings containing numbers, such as dates, time and financial figures. It is specifically catered to nzdl's niupepa archive, in that it assumes dates are between 1841 and 1933. It also only recognises typographical conventions used in the newspaper, and may be erroneous upon usage with external conventions.
+
 ## Usage
 * `hiki_niupepa_kupu` collects text from the 19th century Māori language newspaper archive, splits it into its constituent paragraphs, determines how much Māori language is used, and stores it in a csv. It outputs a csv file containing the time of extraction, newspaper name, issue name, page number, percentage of Māori language in the text, the raw, and the page's url for every paragraph it can find in every issue, including paragraphs that span multiple pages. The script can update the 'text' csv if it is incomplete. It uses the csv, re, time, argparse, pathlib, urllib.request, bs4, datetime and taumahi modules, which may need to be installed. Some possible formats are provided below to execute the script. If no files are specified, it will use a default name.
 
