@@ -25,6 +25,7 @@ def hiki_rau_ōrau(perehitanga_kōnae_ingoa, perehitanga_kōnae_ingoa_hou):
         perehitanga_kuputohu.writerow(kōnae_tūtira[0] + ['bad_read'])
         for rārangi in kōnae_tūtira[1:]:
             if float(rārangi[8]) == 100.00:
+                rārangi[9] = "<s>" + clean_whitespace(re.sub(r'-', r'@-@', re.sub(r'([!"#$%&\'()*+,./:;<=>?[\\\]^_`‘’{|}\-£´])', r' \1 ', re.sub(r'w["\'`‘’´]', 'wh', rārangi[9].lower())))) + "</s>"
                 if re.search(r'[^a-zA-Z0-9.\/\-!?()\'\",:;āēīōū£\s]', rārangi[11]):
                     perehitanga_kuputohu.writerow(rārangi + [True])
                 else:
@@ -47,7 +48,7 @@ def matua():
         perehitanga_kōnae_ingoa = perehitanga_kōnae_ingoa_hou = kōwhiri.rewrite
 
     else:
-        perehitanga_kōnae_ingoa = kōwhiri.input if kōwhiri.input else 'perehitanga_kuputohu_split.csv'
+        perehitanga_kōnae_ingoa = kōwhiri.input if kōwhiri.input else 'perehitanga_kuputohu.csv'
         perehitanga_kōnae_ingoa_hou = kōwhiri.output if kōwhiri.output else 'perehitanga_kuputohu_100.csv'
 
     hiki_rau_ōrau(perehitanga_kōnae_ingoa, perehitanga_kōnae_ingoa_hou)
