@@ -1,37 +1,25 @@
 #!/usr/bin/python3
-# Gets text that is ranked to be 100% Māori (from a text csv file output by hiki_niupepa_kupu)
-# And saves it to a new csv with the intention of feeding it into a language model.
-# It marks it with a flag if it believes there has been problems reading the text from the newspaper's scan
-
+# Gets text that is ranked to be 100% Māori (from a text csv file output by hiki_niupepa_kupu) and saves it to a text file.
 
 import re
 import csv
-import argparse
 from taumahi import *
-from pandas import read_csv
-from tuaki_niupepa_hou import tiki_ōrau
 
 
 def hiki_rau_ōrau(perehitanga_kōnae_ingoa, perehitanga_kōnae_ingoa_hou):
-    # Writes rows from the input which meet the criteria of ōrau == 100 to the output file.
-    # Adds a flag if it detects special characters
+    # Writes formatted text from the input csv (an output of hiki_niupepa_kupu) which meet the criteria of ōrau == 100 to the output file.
+    # Prints aspects from the row it has written, so the user can see how far through the csv the process is.
 
-    with open(perehitanga_kōnae_ingoa, 'r') as kōnae:
-        kōnae_tūtira = list(csv.reader(kōnae))
-        kōnae.close()
-
-    with open(perehitanga_kōnae_ingoa_hou, 'w') as kōnae:
-        perehitanga_kuputohu = csv.writer(kōnae)
-        perehitanga_kuputohu.writerow(kōnae_tūtira[0] + ['bad_read'])
-        for rārangi in kōnae_tūtira[1:]:
+    with open(perehitanga_kōnae_ingoa, 'r') as kuputohu_kōnae, open(perehitanga_kōnae_ingoa_hou, 'w') as kupu_kōnae:
+        kaipānui = csv.reader(kuputohu_kōnae)
+        # Skip the header
+        next(kaipānui)
+        for rārangi in kaipānui:
             if float(rārangi[8]) == 100.00:
-                rārangi[9] = "<s>" + clean_whitespace(re.sub(r'-', r'@-@', re.sub(r'([!"#$%&\'()*+,./:;<=>?[\\\]^_`‘’{|}\-£´])', r' \1 ', re.sub(r'w["\'`‘’´]', 'wh', rārangi[9].lower())))) + "</s>"
-                if re.search(r'[^a-zA-Z0-9.\/\-!?()\'\",:;āēīōū£\s]', rārangi[11]):
-                    perehitanga_kuputohu.writerow(rārangi + [True])
-                else:
-                    perehitanga_kuputohu.writerow(rārangi)
-                print(rārangi[1:4])
-        kōnae.close()
+                kupu_kōnae.write(rārangi[9] + "\n")
+                print(rārangi[:4])
+        kuputohu_kōnae.close()
+        kupu_kōnae.close()
 
 
 def matua():
@@ -49,7 +37,7 @@ def matua():
 
     else:
         perehitanga_kōnae_ingoa = kōwhiri.input if kōwhiri.input else 'perehitanga_kuputohu.csv'
-        perehitanga_kōnae_ingoa_hou = kōwhiri.output if kōwhiri.output else 'perehitanga_kuputohu_100.csv'
+        perehitanga_kōnae_ingoa_hou = kōwhiri.output if kōwhiri.output else 'tauira.txt'
 
     hiki_rau_ōrau(perehitanga_kōnae_ingoa, perehitanga_kōnae_ingoa_hou)
 
